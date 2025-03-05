@@ -2970,532 +2970,157 @@ function updateSupplierNav() {
                 window.opener.updateRecentOrders();
             }
             
-            // 只在全部订单页面更新显示，而不是刷新整个页面
+            // 如果在全部订单页面，刷新当前页面
             if (document.querySelector('.order-list')) {
-                updateOrderDisplay(orderId, field, value);
-            }
-        }
-    }
-
-    // 添加新函数来更新订单显示
-    function updateOrderDisplay(orderId, field, value) {
-        const orderElement = document.querySelector(`[data-id="${orderId}"]`);
-        if (orderElement) {
-            const fieldElement = orderElement.querySelector(`.${field}`);
-            if (fieldElement) {
-                if (field === 'price') {
-                    fieldElement.textContent = `¥${value}`;
-                } else {
-                    fieldElement.textContent = value;
-                }
+                location.reload();
             }
         }
     }
 
     // 修改打开所有订单记录的函数
     function openAllOrders() {
-        const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
-        const exportDate = document.getElementById('exportDate').value || new Date().toISOString().split('T')[0];
-        
-        const dayStart = new Date(exportDate);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(exportDate);
-        dayEnd.setHours(23, 59, 59, 999);
-        
-        // 过滤当天的订单
-        const orders = Object.values(orderData)
-            .filter(order => {
-                const orderDate = new Date(order.timestamp);
-                return orderDate >= dayStart && orderDate < dayEnd;
-            })
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        // 跳转到 records.html 页面
+        window.location.href = 'records.html';
+    }
 
-        if (orders.length === 0) {
-            alert(`${exportDate} 没有订单记录`);
+    // 处理字段编辑的函数
+    function handleFieldEdit(event) {
+        const field = event.target;
+        const orderId = field.dataset.orderId;
+        const fieldName = field.dataset.field;
+        const value = field.textContent.trim();
+        
+        if (orderId && fieldName) {
+            try {
+                updateOrderField(orderId, fieldName, value);
+                console.log(`成功更新订单 ${orderId} 的 ${fieldName} 为 ${value}`);
+            } catch (error) {
+                console.error('更新订单字段时出错:', error);
+                alert('更新订单信息失败，请重试');
+            }
+        }
+    }
+
+    // 确保 updateRecordManager 函数正确设置数据属性
+    function updateRecordManager() {
+        const recordListManager = document.getElementById('recordListManager');
+        if (!recordListManager) {
+            console.error("未找到记录列表容器");
             return;
         }
-
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>${exportDate} 订单记录</title>
-                <style>
-                    body { 
-                        font-family: Arial; 
-                        padding: 20px;
-                        max-width: 1800px;
-                        margin: 0 auto;
-                        background: #f5f5f5;
-                    }
-                    .order-list {
-                        margin-top: 20px;
-                        background: white;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        overflow: hidden;
-                    }
-                    .order-item {
-                        display: grid;
-                        grid-template-columns: 30px 120px 120px minmax(100px, 1fr) 80px 80px 80px 80px 120px 150px 100px 80px;
-                        gap: 12px;
-                        padding: 12px 15px;
-                        border-bottom: 1px solid #eee;
-                        align-items: center;
-                    }
-                    .order-item:hover {
-                        background: #f8f9fa;
-                    }
-                    .customer {
-                        font-weight: bold;
-                        color: #333;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        background: #f5f5f5;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                    .code {
-                        color: #1976D2;
-                        font-family: monospace;
-                        font-weight: bold;
-                        font-size: 14px;
-                        white-space: nowrap;
-                        padding: 4px 8px;
-                        background: #e3f2fd;
-                        border-radius: 4px;
-                    }
-                    .name {
-                        color: #666;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                    .size {
-                        background: #e3f2fd;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        text-align: center;
-                        color: #1976D2;
-                    }
-                    .quantity {
-                        text-align: center;
-                        background: #f5f5f5;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                    }
-                    .price, .cost {
-                        color: #f44336;
-                        font-weight: bold;
-                        text-align: right;
-                        padding: 4px 8px;
-                        background: #fff3f0;
-                        border-radius: 4px;
-                    }
-                    .cost {
-                        color: #4CAF50;
-                        background: #E8F5E9;
-                    }
-                    .supplier {
-                        color: #2196F3;
-                        font-size: 13px;
-                        padding: 4px 8px;
-                        background: #e3f2fd;
-                        border-radius: 4px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                    .remark {
-                        color: #666;
-                        font-style: italic;
-                        padding: 4px 8px;
-                        background: #fff;
-                        border-radius: 4px;
-                        border: 1px solid #eee;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-                    .time {
-                        color: #999;
-                        font-size: 13px;
-                        white-space: nowrap;
-                    }
-                    .delete-btn {
-                        padding: 6px 12px;
-                        background: #ff4444;
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        transition: background-color 0.2s;
-                    }
-                    .delete-btn:hover {
-                        background: #cc0000;
-                    }
-                    .search-bar {
-                        background: white;
-                        padding: 15px;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        margin-bottom: 20px;
-                        display: flex;
-                        gap: 10px;
-                        align-items: center;
-                    }
-                    .search-input {
-                        flex: 1;
-                        padding: 10px;
-                        border: 1px solid #ddd;
-                        border-radius: 4px;
-                        font-size: 14px;
-                        transition: border-color 0.2s;
-                    }
-                    .search-input:focus {
-                        outline: none;
-                        border-color: #2196F3;
-                    }
-                    .editable {
-                        cursor: text;
-                        transition: all 0.2s;
-                    }
-                    .editable:hover {
-                        background: #f0f0f0;
-                    }
-                    .editable:focus {
-                        background: #fff;
-                        outline: 2px solid #2196F3;
-                        outline-offset: -2px;
-                    }
-                    .select-checkbox {
-                        width: 18px;
-                        height: 18px;
-                        cursor: pointer;
-                    }
-                    .batch-actions {
-                        position: fixed;
-                        bottom: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background: white;
-                        padding: 15px 25px;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                        display: none;
-                        align-items: center;
-                        gap: 15px;
-                        z-index: 1000;
-                    }
-                    .batch-actions.active {
-                        display: flex;
-                    }
-                    .batch-actions .count {
-                        color: #666;
-                        font-size: 14px;
-                    }
-                    .batch-delete-btn {
-                        background: #ff4444;
-                        color: white;
-                        border: none;
-                        padding: 8px 20px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        transition: background-color 0.2s;
-                    }
-                    .batch-cancel-btn {
-                        background: #9e9e9e;
-                        color: white;
-                        border: none;
-                        padding: 8px 20px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 14px;
-                        transition: background-color 0.2s;
-                    }
-                    .batch-delete-btn:hover {
-                        background: #d32f2f;
-                    }
-                    .batch-cancel-btn:hover {
-                        background: #757575;
-                    }
-                    .header-row {
-                        display: grid;
-                        grid-template-columns: 30px 120px 120px minmax(100px, 1fr) 80px 80px 80px 80px 120px 150px 100px 80px;
-                        gap: 12px;
-                        padding: 12px 15px;
-                        background: #f5f5f5;
-                        font-weight: bold;
-                        border-bottom: 2px solid #ddd;
-                    }
-                    .header-cell {
-                        color: #666;
-                        font-size: 13px;
-                        text-transform: uppercase;
-                    }
-                </style>
-                <script>
-                    // 初始化选中的订单集合
-                    let selectedOrders = new Set();
-                    let orderData = ${JSON.stringify(orders)};
-
-                    function searchOrders() {
-                        const searchText = document.getElementById('searchInput').value.toLowerCase();
-                        const orders = document.querySelectorAll('.order-item');
-                        
-                        orders.forEach(order => {
-                            const text = order.textContent.toLowerCase();
-                            order.style.display = text.includes(searchText) ? '' : 'none';
-                        });
-                    }
-
-                    function updateOrderField(orderId, field, value) {
-                        try {
-                            // 发送消息到父窗口更新数据
-                            window.opener.postMessage({
-                                type: 'updateOrder',
-                                orderId: orderId,
-                                field: field,
-                                value: value.trim()
-                            }, '*');
-                            
-                            // 更新本地显示
-                            const order = orderData.find(o => o.id === orderId);
-                            if (order) {
-                                order[field] = value.trim();
-                            }
-                            
-                            // 刷新显示
-                            location.reload();
-                        } catch (error) {
-                            console.error('更新字段失败:', error);
-                            alert('更新失败: ' + error.message);
-                        }
-                    }
-
-                    function deleteOrder(orderId) {
-                        if (!orderId) {
-                            console.error('未提供订单ID');
-                            return;
-                        }
-
-                        if (confirm('确定要删除这条订单记录吗？')) {
-                            try {
-                                // 发送消息到父窗口删除数据
-                                window.opener.postMessage({
-                                    type: 'deleteOrder',
-                                    orderId: orderId
-                                }, '*');
-                                
-                                // 更新本地显示
-                                orderData = orderData.filter(order => order.id !== orderId);
-                                location.reload();
-                            } catch (error) {
-                                console.error('删除订单失败:', error);
-                                alert('删除失败: ' + error.message);
-                            }
-                        }
-                    }
-
-                    function toggleSelect(orderId, checkbox) {
-                        if (checkbox.checked) {
-                            selectedOrders.add(orderId);
-                        } else {
-                            selectedOrders.delete(orderId);
-                        }
-                        updateBatchActions();
-                    }
-
-                    function toggleSelectAll(checkbox) {
-                        const allCheckboxes = document.querySelectorAll('.select-checkbox');
-                        allCheckboxes.forEach(cb => {
-                            cb.checked = checkbox.checked;
-                            const orderId = cb.getAttribute('data-id');
-                            if (orderId) {
-                                if (checkbox.checked) {
-                                    selectedOrders.add(orderId);
-                                } else {
-                                    selectedOrders.delete(orderId);
-                                }
-                            }
-                        });
-                        updateBatchActions();
-                    }
-
-                    function updateBatchActions() {
-                        const batchActions = document.querySelector('.batch-actions');
-                        if (selectedOrders.size > 0) {
-                            batchActions.classList.add('active');
-                            batchActions.querySelector('.count').textContent = 
-                                \`已选择 \${selectedOrders.size} 项\`;
-                        } else {
-                            batchActions.classList.remove('active');
-                        }
-                    }
-
-                    function clearSelection() {
-                        selectedOrders.clear();
-                        const allCheckboxes = document.querySelectorAll('.select-checkbox');
-                        allCheckboxes.forEach(cb => cb.checked = false);
-                        document.querySelector('.select-all-checkbox').checked = false;
-                        updateBatchActions();
-                    }
-
-                    function batchDeleteOrders() {
-                        if (selectedOrders.size === 0) {
-                            alert('请先选择要删除的订单');
-                            return;
-                        }
-
-                        if (confirm(\`确定要删除选中的 \${selectedOrders.size} 条订单吗？\`)) {
-                            try {
-                                // 发送消息到父窗口批量删除数据
-                                window.opener.postMessage({
-                                    type: 'batchDeleteOrders',
-                                    orderIds: Array.from(selectedOrders)
-                                }, '*');
-                                
-                                // 更新本地显示
-                                orderData = orderData.filter(order => !selectedOrders.has(order.id));
-                                selectedOrders.clear();
-                                location.reload();
-                            } catch (error) {
-                                console.error('批量删除失败:', error);
-                                alert('批量删除失败: ' + error.message);
-                            }
-                        }
-                    }
-
-                    // 页面加载完成后初始化
-                    document.addEventListener('DOMContentLoaded', function() {
-                        // 初始化批量操作区域
-                        updateBatchActions();
-                    });
-                </script>
-            </head>
-            <body>
-                <h2>${exportDate} 订单记录</h2>
-                <div class="search-bar">
-                    <input type="checkbox" class="select-all-checkbox" 
-                           onclick="toggleSelectAll(this)">
-                    <input type="text" 
-                           id="searchInput" 
-                           class="search-input" 
-                           placeholder="搜索客户、商品编码、商品名称..." 
-                           oninput="searchOrders()">
-                </div>
-                <div class="order-list">
-                    <div class="header-row">
-                        <div class="header-cell"></div>
-                        <div class="header-cell">客户</div>
-                        <div class="header-cell">商品编码</div>
-                        <div class="header-cell">商品名称</div>
-                        <div class="header-cell">尺码</div>
-                        <div class="header-cell">数量</div>
-                        <div class="header-cell">成本</div>
-                        <div class="header-cell">售价</div>
-                        <div class="header-cell">供应商</div>
-                        <div class="header-cell">备注</div>
-                        <div class="header-cell">时间</div>
-                        <div class="header-cell">操作</div>
-                    </div>
-                    ${orders.map(order => `
-                        <div class="order-item">
-                            <input type="checkbox" 
-                                   class="select-checkbox" 
-                                   data-id="${order.id}"
-                                   onclick="toggleSelect('${order.id}', this)">
-                            <span class="customer editable" 
-                                  contenteditable="true" 
-                                  onblur="updateOrderField('${order.id}', 'customer', this.textContent)"
-                                  title="点击编辑客户名称">${order.customer || '未填写'}</span>
-                            <span class="code editable" 
-                                  contenteditable="true" 
-                                  onblur="updateOrderField('${order.id}', 'code', this.textContent)"
-                                  title="点击编辑商品编码">${order.code}</span>
-                            <span class="name" title="商品名称">${order.name || '-'}</span>
-                            <span class="size editable" 
-                                  contenteditable="true" 
-                                  onblur="updateOrderField('${order.id}', 'size', this.textContent)"
-                                  title="点击编辑尺码">${order.size || '-'}</span>
-                            <span class="quantity editable"
-                                  contenteditable="true"
-                                  onblur="updateOrderField('${order.id}', 'quantity', this.textContent)"
-                                  title="点击编辑数量">×${order.quantity}</span>
-                            <span class="cost editable"
-                                  contenteditable="true"
-                                  onblur="updateOrderField('${order.id}', 'cost', this.textContent)"
-                                  title="点击编辑成本">${order.cost || '-'}</span>
-                            <span class="price editable" 
-                                  contenteditable="true" 
-                                  onblur="updateOrderField('${order.id}', 'price', this.textContent)"
-                                  title="点击编辑价格">${order.price || '-'}</span>
-                            <span class="supplier editable"
-                                  contenteditable="true"
-                                  onblur="updateOrderField('${order.id}', 'supplier', this.textContent)"
-                                  title="点击编辑供应商">${order.supplier || '未设置供应商'}</span>
-                            <span class="remark editable"
-                                  contenteditable="true"
-                                  onblur="updateOrderField('${order.id}', 'remark', this.textContent)"
-                                  title="点击添加备注">${order.remark || ''}</span>
-                            <span class="time">${new Date(order.timestamp).toLocaleTimeString()}</span>
-                            <button class="delete-btn" onclick="deleteOrder('${order.id}')" title="删除订单">删除</button>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="batch-actions">
-                    <span class="count"></span>
-                    <button onclick="batchDeleteOrders()" class="batch-delete-btn">批量删除</button>
-                    <button onclick="clearSelection()" class="batch-cancel-btn">取消选择</button>
-                </div>
-            </body>
-            </html>
-        `;
-
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-
-        // 添加消息监听器处理来自新窗口的请求
-        window.addEventListener('message', function(event) {
-            try {
-                const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
-                
-                switch(event.data.type) {
-                    case 'updateOrder':
-                        const { orderId, field, value } = event.data;
-                        if (orderData[orderId]) {
-                            orderData[orderId][field] = value;
-                            localStorage.setItem('orderData', JSON.stringify(orderData));
-                            updateRecentOrders();
-                        }
-                        break;
-                        
-                    case 'deleteOrder':
-                        if (orderData[event.data.orderId]) {
-                            delete orderData[event.data.orderId];
-                            localStorage.setItem('orderData', JSON.stringify(orderData));
-                            updateRecentOrders();
-                        }
-                        break;
-                        
-                    case 'batchDeleteOrders':
-                        event.data.orderIds.forEach(orderId => {
-                            if (orderData[orderId]) {
-                                delete orderData[orderId];
-                            }
-                        });
-                        localStorage.setItem('orderData', JSON.stringify(orderData));
-                        updateRecentOrders();
-                        break;
-                }
-            } catch (error) {
-                console.error('处理窗口消息失败:', error);
+        
+        const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+        const searchText = document.getElementById('recordSearch')?.value?.toLowerCase() || '';
+        
+        // 清空现有内容
+        recordListManager.innerHTML = '';
+        
+        // 按时间倒序排序订单
+        const sortedOrders = Object.entries(orderData)
+            .sort(([, a], [, b]) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+        
+        if (sortedOrders.length === 0) {
+            recordListManager.innerHTML = '<div class="no-records">暂无订单记录</div>';
+            return;
+        }
+        
+        // 按供应商分组
+        const supplierGroups = {};
+        sortedOrders.forEach(([orderId, order]) => {
+            // 如果有搜索文本，进行过滤
+            if (searchText) {
+                const matchesSearch = 
+                    (order.customer?.toLowerCase().includes(searchText)) ||
+                    (order.code?.toLowerCase().includes(searchText)) ||
+                    (order.name?.toLowerCase().includes(searchText)) ||
+                    (order.supplier?.toLowerCase().includes(searchText));
+                    
+                if (!matchesSearch) return;
             }
+            
+            const supplier = order.supplier || '未分类';
+            if (!supplierGroups[supplier]) {
+                supplierGroups[supplier] = [];
+            }
+            supplierGroups[supplier].push({orderId, ...order});
+        });
+        
+        // 为每个供应商创建一个组
+        Object.entries(supplierGroups).forEach(([supplier, orders]) => {
+            const supplierGroup = document.createElement('div');
+            supplierGroup.className = 'supplier-group';
+            
+            const supplierTitle = document.createElement('div');
+            supplierTitle.className = 'supplier-title';
+            supplierTitle.innerHTML = `
+                <div class="supplier-title-left">
+                    <span>${supplier}</span>
+                    <span class="count">${orders.length}个订单</span>
+                </div>
+            `;
+            supplierGroup.appendChild(supplierTitle);
+            
+            // 添加订单项
+            orders.forEach(order => {
+                const recordItem = document.createElement('div');
+                recordItem.className = 'record-item-manager';
+                recordItem.id = `order-${order.orderId}`;
+                
+                // 创建订单信息区域
+                const recordInfo = document.createElement('div');
+                recordInfo.className = 'record-info';
+                
+                // 添加订单详细信息，使用 data 属性存储订单ID和字段名
+                recordInfo.innerHTML = `
+                    <div class="order-code-name">
+                        <span class="code">${order.code || ''}</span>
+                        <span class="order-name">${order.name || ''}</span>
+                    </div>
+                    <div>
+                        <span>客户: </span>
+                        <span class="order-customer" 
+                              contenteditable="true" 
+                              data-order-id="${order.orderId}" 
+                              data-field="customer">${order.customer || ''}</span>
+                    </div>
+                    <div>
+                        <span>尺码: </span>
+                        <span class="order-size" 
+                              contenteditable="true" 
+                              data-order-id="${order.orderId}" 
+                              data-field="size">${order.size || ''}</span>
+                    </div>
+                    <div>
+                        <span>数量: </span>
+                        <span>${order.quantity || 1}</span>
+                    </div>
+                    <div>
+                        <span>单价: </span>
+                        <span class="order-price" 
+                              contenteditable="true" 
+                              data-order-id="${order.orderId}" 
+                              data-field="price">${order.price || ''}</span>
+                    </div>
+                    <div>
+                        <span>时间: </span>
+                        <span>${new Date(order.timestamp || Date.now()).toLocaleString()}</span>
+                    </div>
+                `;
+                
+                // 创建操作按钮区域
+                const recordActions = document.createElement('div');
+                recordActions.className = 'record-actions';
+                recordActions.innerHTML = `
+                    <button class="edit-btn" onclick="editRecord('${order.orderId}')">编辑</button>
+                    <button class="delete-btn" onclick="deleteRecord('${order.orderId}')">删除</button>
+                `;
+                
+                recordItem.appendChild(recordInfo);
+                recordItem.appendChild(recordActions);
+                supplierGroup.appendChild(recordItem);
+            });
+            
+            recordListManager.appendChild(supplierGroup);
         });
     }
 

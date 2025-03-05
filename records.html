@@ -1,23 +1,36 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>记录管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单记录</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
+            line-height: 1.6;
             padding: 20px;
-            background: #f5f5f5;
+            margin: 0;
+            background-color: #f5f5f5;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
+            background-color: #fff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
         }
 
         .header {
@@ -25,257 +38,519 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
         }
 
-        .search-box {
-            width: 100%;
-            max-width: 300px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .search-bar {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
-        .record-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .record-item {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .record-header {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .code {
-            font-weight: bold;
-            font-size: 16px;
-            color: #1976D2;
-            min-width: 120px;
-        }
-
-        .record-body {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .field {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .field label {
-            color: #666;
-            min-width: 60px;
-        }
-
-        .edit-input {
-            padding: 6px 10px;
+        .search-bar input {
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 14px;
-            flex: 1;
-            transition: border-color 0.3s;
+            flex-grow: 1;
+            max-width: 300px;
         }
 
-        .edit-input:focus {
-            border-color: #2196F3;
-            outline: none;
-        }
-
-        .edit-input.name {
-            font-weight: 500;
-            flex: 1;
-        }
-
-        .save-btn {
-            padding: 8px 15px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            opacity: 0.5;
-        }
-
-        .save-btn.modified {
-            opacity: 1;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            animation: fadeInOut 2s ease-in-out;
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translate(-50%, 20px); }
-            10% { opacity: 1; transform: translate(-50%, 0); }
-            90% { opacity: 1; transform: translate(-50%, 0); }
-            100% { opacity: 0; transform: translate(-50%, -20px); }
-        }
-
-        .record-info {
-            flex: 1;
-        }
-
-        .record-info div {
-            margin: 5px 0;
-        }
-
-        .record-info div:first-child {
-            font-weight: bold;
-            font-size: 16px;
-            color: #333;
-        }
-
-        .record-actions {
+        .action-buttons {
             display: flex;
             gap: 10px;
         }
 
-        .edit-btn, .delete-btn {
+        button {
             padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            color: white;
         }
 
-        .edit-btn {
-            background: #2196F3;
+        button:hover {
+            background-color: #45a049;
         }
 
         .delete-btn {
-            background: #f44336;
-        }
-
-        .edit-btn:hover {
-            background: #1976D2;
+            background-color: #f44336;
         }
 
         .delete-btn:hover {
-            background: #D32F2F;
+            background-color: #d32f2f;
         }
 
         .back-btn {
-            padding: 10px 20px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            background-color: #2196F3;
         }
 
         .back-btn:hover {
-            background: #45a049;
+            background-color: #1976D2;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .code {
+            color: #1976D2;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .price {
+            color: #f44336;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .cost {
+            color: #666;
+            text-align: right;
+            background-color: #f9f9f9;
+        }
+
+        [contenteditable="true"] {
+            padding: 2px 5px;
+            border-radius: 3px;
+            min-width: 30px;
+            display: inline-block;
+        }
+
+        [contenteditable="true"]:hover {
+            background: #f0f0f0;
+        }
+
+        [contenteditable="true"]:focus {
+            background: #fff;
+            outline: 2px solid #2196F3;
+            outline-offset: -2px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .pagination button.active {
+            background-color: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+
+        .no-records {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>记录管理</h1>
-            <button class="back-btn" onclick="window.close()">返回</button>
+            <h1 id="orderTitle">订单记录</h1>
+            <div class="action-buttons">
+                <button class="back-btn" onclick="goBack()">返回主页</button>
+                <button onclick="exportOrdersToExcel()">导出Excel</button>
+            </div>
         </div>
-        
-        <input type="text" id="recordSearch" class="search-box" placeholder="搜索商品编码、名称或供应商...">
-        
-        <div class="record-list" id="recordList"></div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="搜索客户、编码、商品名称...">
+            <button onclick="searchOrders()">搜索</button>
+        </div>
+
+        <div id="ordersTableContainer">
+            <!-- 订单表格将在这里动态生成 -->
+        </div>
+
+        <div class="footer">
+            <p>© 2023 商品图片批量上传系统 - 订单管理</p>
+        </div>
     </div>
 
     <script>
-        // 获取主窗口的订单数据
-        const orderData = JSON.parse(window.opener.localStorage.getItem('orderData') || '{}');
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
 
-        // 显示记录列表
-        function displayRecords(searchText = '') {
-            const recordList = document.getElementById('recordList');
+        // 初始化页面
+        function initializePage() {
+            updateOrderTitle();
+            loadOrders();
             
-            // 过滤记录
-            const filteredRecords = Object.entries(orderData)
-                .filter(([id, order]) => {
-                    const searchString = `${order.code} ${order.name} ${order.supplier} ${order.customer}`.toLowerCase();
-                    return searchString.includes(searchText.toLowerCase());
-                })
-                .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-
-            // 生成HTML
-            recordList.innerHTML = filteredRecords.map(([id, order]) => `
-                <div class="record-item" data-id="${id}">
-                    <div class="record-info">
-                        <div class="record-header">
-                            <span class="code">${order.code}</span>
-                            <span class="name">${order.name || ''}</span>
-                        </div>
-                        <div class="record-body">
-                            <div class="field">
-                                <label>供应商:</label>
-                                <span>${order.supplier || '-'}</span>
-                            </div>
-                            <div class="field">
-                                <label>客户:</label>
-                                <span>${order.customer || '-'}</span>
-                            </div>
-                            <div class="field">
-                                <label>数量:</label>
-                                <span>${order.quantity || '-'}</span>
-                            </div>
-                            <div class="field">
-                                <label>单价:</label>
-                                <span>${order.price || '-'}</span>
-                            </div>
-                            <div class="field">
-                                <label>备注:</label>
-                                <span>${order.remark || '-'}</span>
-                            </div>
-                            <div class="field">
-                                <label>时间:</label>
-                                <span>${new Date(order.timestamp).toLocaleString()}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="record-actions">
-                        <button class="delete-btn" onclick="deleteRecord('${id}')">删除</button>
-                    </div>
-                </div>
-            `).join('');
+            // 添加搜索框事件监听
+            document.getElementById('searchInput').addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    searchOrders();
+                }
+            });
         }
 
-        // 删除记录
-        function deleteRecord(id) {
-            if (confirm('确定要删除这条订单记录吗？')) {
-                delete orderData[id];
-                window.opener.localStorage.setItem('orderData', JSON.stringify(orderData));
-                displayRecords();
+        // 更新订单标题（显示当前日期）
+        function updateOrderTitle() {
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('orderTitle').textContent = `${dateStr} 订单记录`;
+        }
+
+        // 加载订单数据
+        function loadOrders() {
+            const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            // 按时间倒序排序订单
+            const sortedOrders = Object.entries(orderData)
+                .sort(([, a], [, b]) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+            
+            renderOrdersTable(sortedOrders, searchText);
+        }
+
+        // 渲染订单表格
+        function renderOrdersTable(sortedOrders, searchText = '') {
+            const container = document.getElementById('ordersTableContainer');
+            
+            // 创建表格
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAllOrders" onchange="toggleSelectAllOrders(this.checked)">
+                            </th>
+                            <th>客户</th>
+                            <th>商品编码</th>
+                            <th>商品名称</th>
+                            <th>尺码</th>
+                            <th>数量</th>
+                            <th>成本</th>
+                            <th>单价</th>
+                            <th>供应商</th>
+                            <th>备注</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // 过滤并添加订单行
+            const filteredOrders = sortedOrders.filter(([, order]) => {
+                if (!searchText) return true;
+                
+                return (
+                    (order.customer?.toLowerCase().includes(searchText)) ||
+                    (order.code?.toLowerCase().includes(searchText)) ||
+                    (order.name?.toLowerCase().includes(searchText)) ||
+                    (order.supplier?.toLowerCase().includes(searchText))
+                );
+            });
+            
+            if (filteredOrders.length === 0) {
+                html += `
+                    <tr>
+                        <td colspan="12" class="no-records">暂无订单记录</td>
+                    </tr>
+                `;
+            } else {
+                filteredOrders.forEach(([orderId, order]) => {
+                    // 格式化时间
+                    const orderTime = new Date(order.timestamp || Date.now());
+                    const timeStr = orderTime.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+                    
+                    html += `
+                        <tr id="order-row-${orderId}">
+                            <td>
+                                <input type="checkbox" class="order-checkbox" data-id="${orderId}">
+                            </td>
+                            <td>
+                                <span class="order-customer" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="customer"
+                                      onblur="updateOrderField('${orderId}', 'customer', this.textContent.trim())">${order.customer || ''}</span>
+                            </td>
+                            <td>
+                                <span class="code">${order.code || ''}</span>
+                            </td>
+                            <td>
+                                <span class="order-name" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="name"
+                                      onblur="updateOrderField('${orderId}', 'name', this.textContent.trim())">${order.name || '-'}</span>
+                            </td>
+                            <td>
+                                <span class="order-size" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="size"
+                                      onblur="updateOrderField('${orderId}', 'size', this.textContent.trim())">${order.size || ''}</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="order-quantity" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="quantity"
+                                      onblur="updateOrderField('${orderId}', 'quantity', this.textContent.trim().replace('×', ''))">${order.quantity || 1}</span>
+                            </td>
+                            <td class="cost">
+                                <span class="order-cost" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="cost"
+                                      onblur="updateOrderField('${orderId}', 'cost', this.textContent.trim())">${order.cost || ''}</span>
+                            </td>
+                            <td class="price">
+                                <span class="order-price" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="price"
+                                      onblur="updateOrderField('${orderId}', 'price', this.textContent.trim())">${order.price || ''}</span>
+                            </td>
+                            <td>
+                                <span class="order-supplier" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="supplier"
+                                      onblur="updateOrderField('${orderId}', 'supplier', this.textContent.trim())">${order.supplier || ''}</span>
+                            </td>
+                            <td>
+                                <span class="order-remark" 
+                                      contenteditable="true" 
+                                      data-order-id="${orderId}" 
+                                      data-field="remark"
+                                      onblur="updateOrderField('${orderId}', 'remark', this.textContent.trim())">${order.remark || ''}</span>
+                            </td>
+                            <td>
+                                <span>${timeStr}</span>
+                            </td>
+                            <td>
+                                <button class="delete-btn" onclick="deleteOrder('${orderId}')">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `
+                    </tbody>
+                </table>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button onclick="batchDeleteOrders()" class="delete-btn">批量删除</button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // 搜索订单
+        function searchOrders() {
+            loadOrders();
+        }
+
+        // 更新订单字段
+        function updateOrderField(orderId, field, value) {
+            try {
+                const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+                if (orderData[orderId]) {
+                    // 对数量字段进行特殊处理，确保它是一个数字
+                    if (field === 'quantity') {
+                        value = parseInt(value) || 1;
+                    }
+                    
+                    // 对价格和成本字段进行特殊处理，确保它们是数字
+                    if (field === 'price' || field === 'cost') {
+                        value = parseFloat(value) || value;
+                    }
+                    
+                    orderData[orderId][field] = value;
+                    localStorage.setItem('orderData', JSON.stringify(orderData));
+                    console.log(`成功更新订单 ${orderId} 的 ${field} 为 ${value}`);
+                    
+                    // 如果是数量、价格或成本字段，可能需要更新显示
+                    if (field === 'quantity' || field === 'price' || field === 'cost') {
+                        const element = document.querySelector(`[data-order-id="${orderId}"][data-field="${field}"]`);
+                        if (element) {
+                            if (field === 'quantity') {
+                                element.textContent = value;
+                            }
+                        }
+                    }
+                } else {
+                    console.error(`未找到订单 ID: ${orderId}`);
+                    alert(`更新失败：未找到订单 ID: ${orderId}`);
+                }
+            } catch (error) {
+                console.error('更新订单字段时出错:', error);
+                alert('更新订单信息失败，请重试');
             }
         }
 
-        // 初始化搜索功能
-        document.getElementById('recordSearch').addEventListener('input', (e) => {
-            displayRecords(e.target.value);
-        });
+        // 删除订单
+        function deleteOrder(orderId) {
+            if (confirm('确定要删除此订单吗？')) {
+                const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+                if (orderData[orderId]) {
+                    delete orderData[orderId];
+                    localStorage.setItem('orderData', JSON.stringify(orderData));
+                    
+                    // 移除表格中的行
+                    const row = document.getElementById(`order-row-${orderId}`);
+                    if (row) row.remove();
+                    
+                    // 如果没有订单了，刷新表格
+                    if (Object.keys(orderData).length === 0) {
+                        loadOrders();
+                    }
+                }
+            }
+        }
 
-        // 初始显示
-        displayRecords();
+        // 批量删除订单
+        function batchDeleteOrders() {
+            const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('请先选择要删除的订单');
+                return;
+            }
+
+            if (confirm(`确定要删除选中的 ${selectedCheckboxes.length} 个订单吗？`)) {
+                const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const orderId = checkbox.dataset.id;
+                    delete orderData[orderId];
+                    
+                    // 移除表格中的行
+                    const row = document.getElementById(`order-row-${orderId}`);
+                    if (row) row.remove();
+                });
+                
+                localStorage.setItem('orderData', JSON.stringify(orderData));
+                
+                // 如果没有订单了，刷新表格
+                if (Object.keys(orderData).length === 0) {
+                    loadOrders();
+                }
+            }
+        }
+
+        // 全选/取消全选
+        function toggleSelectAllOrders(checked) {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+        }
+
+        // 导出订单到Excel
+        function exportOrdersToExcel() {
+            const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+            if (Object.keys(orderData).length === 0) {
+                alert('没有订单数据可导出');
+                return;
+            }
+            
+            // 创建工作表数据
+            const worksheet = [];
+            
+            // 添加表头
+            worksheet.push([
+                '客户', '商品编码', '商品名称', '尺码', '数量', 
+                '成本', '单价', '供应商', '备注', '时间'
+            ]);
+            
+            // 添加订单数据
+            Object.values(orderData).forEach(order => {
+                const row = [
+                    order.customer || '',
+                    order.code || '',
+                    order.name || '',
+                    order.size || '',
+                    order.quantity || 1,
+                    order.cost || '',
+                    order.price || '',
+                    order.supplier || '',
+                    order.remark || '',
+                    new Date(order.timestamp || Date.now()).toLocaleString()
+                ];
+                worksheet.push(row);
+            });
+            
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(worksheet);
+            
+            // 设置列宽
+            const colWidths = [
+                { wch: 15 }, // 客户
+                { wch: 15 }, // 商品编码
+                { wch: 20 }, // 商品名称
+                { wch: 10 }, // 尺码
+                { wch: 8 },  // 数量
+                { wch: 10 }, // 成本
+                { wch: 10 }, // 单价
+                { wch: 15 }, // 供应商
+                { wch: 20 }, // 备注
+                { wch: 20 }  // 时间
+            ];
+            ws['!cols'] = colWidths;
+            
+            // 添加工作表到工作簿
+            XLSX.utils.book_append_sheet(wb, ws, '订单记录');
+            
+            // 生成文件名
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const fileName = `订单记录_${dateStr}.xlsx`;
+            
+            // 导出Excel文件
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // 返回主页
+        function goBack() {
+            window.location.href = 'index.html';
+        }
     </script>
+    
+    <!-- 引入 SheetJS 库用于Excel导出 -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </body>
 </html> 
